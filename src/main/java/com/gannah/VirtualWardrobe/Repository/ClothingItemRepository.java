@@ -14,7 +14,7 @@ import java.util.Optional;
 public interface ClothingItemRepository extends JpaRepository<ClothingItem, Long> {
     List<ClothingItem> findByUserAndCategory(User user, Category category);
     List<ClothingItem> findByIsComfortableTrue();
-    List<ClothingItem> findByOccasionListContaining(Occasion occasion);
+    List<ClothingItem> findByUserAndOccasionListContaining(User user,Occasion occasion);
     List<ClothingItem> findByIsComfortableFalse();
     List<ClothingItem> findByUser(User user);
 }

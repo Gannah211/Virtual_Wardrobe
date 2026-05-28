@@ -26,4 +26,13 @@ public class ClothingItemController {
     public ResponseEntity<ClothingItemResponse> addClothingItem(@Valid @RequestBody ClothingItemRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(clothingItemService.addClothingItem(request));
     }
+    @GetMapping("/occasions/{occasion}")
+    public ResponseEntity<List<ClothingItemResponse>>  getClothingItemsByOccasion(@PathVariable String occasion) {
+        return ResponseEntity.ok((clothingItemService.getItemsByOccasion(occasion)));
+    }
+
+    @GetMapping("/category/{categoryID}")
+    public ResponseEntity<List<ClothingItemResponse>> getClothingItemsByCategory(@PathVariable Long categoryID) {
+        return ResponseEntity.ok(clothingItemService.getClothingItemsByCategory(categoryID));
+    }
 }

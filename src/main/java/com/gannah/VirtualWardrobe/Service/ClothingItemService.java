@@ -46,13 +46,14 @@ public class ClothingItemService {
     }
 
     public List<ClothingItemResponse> getItemsByOccasion(String occasion) {
+        User user = getAuthenticatedUser();
         Occasion occasionEnum;
         try{
             occasionEnum = Occasion.valueOf(occasion.toUpperCase());
         }catch (IllegalArgumentException e){
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid occasion" + occasion);
         }
-        return clothingItemRepository.findByOccasionListContaining(occasionEnum).stream().map(this::mapToResponse).collect(Collectors.toList());
+        return clothingItemRepository.findByUserAndOccasionListContaining(user,occasionEnum).stream().map(this::mapToResponse).collect(Collectors.toList());
     }
 
     public ClothingItemResponse addClothingItem(ClothingItemRequest request) {
