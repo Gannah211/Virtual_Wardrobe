@@ -1,0 +1,86 @@
+package com.gannah.VirtualWardrobe.Service;
+
+import com.gannah.VirtualWardrobe.DTO.Request.ClothingItemRequest;
+import com.gannah.VirtualWardrobe.DTO.Response.ClothingItemResponse;
+import com.gannah.VirtualWardrobe.Model.Category;
+import com.gannah.VirtualWardrobe.Model.ClothingItem;
+import com.gannah.VirtualWardrobe.Model.Occasion;
+import com.gannah.VirtualWardrobe.Model.User;
+import com.gannah.VirtualWardrobe.Repository.CategoryRepository;
+import com.gannah.VirtualWardrobe.Repository.ClothingItemRepository;
+import com.gannah.VirtualWardrobe.Repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class ClothingItemService {
+    private final UserRepository userRepository;
+    private final ClothingItemRepository clothingItemRepository;
+    private final CategoryRepository categoryRepository;
+
+    public List<ClothingItemResponse> getUserAllClothingItems() {
+        User user = getAuthenticatedUser();  // extract to a private helper
+        return clothingItemRepository.findByUser(user)
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    private User getAuthenticatedUser() {
+        String email = "gannah@gmail.com";
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+    }
+
+    public List<ClothingItemResponse> getClothingItemsByCategory(Long categoryId) {
+        User user = getAuthenticatedUser();
+        Category category = categoryRepository.findById(categoryId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Category not found"));
+
+        return clothingItemRepository.findByUserAndCategory(user,category).stream().map(this::mapToResponse).collect(Collectors.toList());
+    }
+
+    public List<ClothingItemResponse> getItemsByOccasion(String occasion) {
+        Occasion occasionEnum;
+        try{
+            occasionEnum = Occasion.valueOf(occasion.toUpperCase());
+        }catch (IllegalArgumentException e){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid occasion" + occasion);
+        }
+        return clothingItemRepository.findByOccasionListContaining(occasionEnum).stream().map(this::mapToResponse).collect(Collectors.toList());
+    }
+
+    public ClothingItemResponse addClothingItem(ClothingItemRequest request) {
+        User user = getAuthenticatedUser();
+        Category category = categoryRepository.findById(request.getCategoryId()).orElseThrow( () -> new RuntimeException("Category not found"));
+        ClothingItem clothingItem = ClothingItem.builder()
+                .color(request.getColor())
+                .imgUrl(request.getImgUrl())
+                .isComfortable(request.isComfortable())
+                .note(request.getNote())
+                .occasionList(request.getOcassionList())
+                .season(request.getSeason())
+                .category(category)
+                .user(user)
+                .build();
+        return mapToResponse(clothingItemRepository.save(clothingItem));
+    }
+
+    private ClothingItemResponse mapToResponse(ClothingItem clothingItem) {
+        return ClothingItemResponse.builder()
+                .id(clothingItem.getId())
+                .color(clothingItem.getColor())
+                .imgUrl(clothingItem.getImgUrl())
+                .note(clothingItem.getNote())
+                .isComfortable(clothingItem.isComfortable())
+                .categoryName(clothingItem.getCategory().getName())
+                .season(clothingItem.getSeason().toString())
+                .ocassionList(clothingItem.getOccasionList().stream().map(Occasion::toString).collect(Collectors.toList()))
+                .build();
+    }
+}
