@@ -72,6 +72,11 @@ public class ClothingItemService {
         return mapToResponse(clothingItemRepository.save(clothingItem));
     }
 
+    public void deleteClothingItem(Long id) {
+        ClothingItem clothingItem = clothingItemRepository.findById(id).orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Clothing Item not found"));
+        clothingItemRepository.delete(clothingItem);
+    }
+
     private ClothingItemResponse mapToResponse(ClothingItem clothingItem) {
         return ClothingItemResponse.builder()
                 .id(clothingItem.getId())
@@ -80,7 +85,7 @@ public class ClothingItemService {
                 .note(clothingItem.getNote())
                 .isComfortable(clothingItem.isComfortable())
                 .categoryName(clothingItem.getCategory().getName())
-                .season(clothingItem.getSeason().toString())
+                .season(clothingItem.getSeason()!= null ? clothingItem.getSeason().toString() : null)
                 .ocassionList(clothingItem.getOccasionList().stream().map(Occasion::toString).collect(Collectors.toList()))
                 .build();
     }

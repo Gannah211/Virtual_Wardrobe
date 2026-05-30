@@ -17,4 +17,5 @@ public interface ClothingItemRepository extends JpaRepository<ClothingItem, Long
     List<ClothingItem> findByUserAndOccasionListContaining(User user,Occasion occasion);
     List<ClothingItem> findByIsComfortableFalse();
     List<ClothingItem> findByUser(User user);
+
 }

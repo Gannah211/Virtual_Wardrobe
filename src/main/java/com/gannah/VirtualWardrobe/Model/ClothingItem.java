@@ -21,7 +21,7 @@ public class ClothingItem {
     @Column(nullable = false)
     private String color;
 
-    @Column(nullable = false)
+    @Column(name = "img_url", nullable = false, columnDefinition = "LONGTEXT")
     private String imgUrl;
 
     @Column(nullable = false)

@@ -35,4 +35,10 @@ public class ClothingItemController {
     public ResponseEntity<List<ClothingItemResponse>> getClothingItemsByCategory(@PathVariable Long categoryID) {
         return ResponseEntity.ok(clothingItemService.getClothingItemsByCategory(categoryID));
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteClothingItem(@PathVariable Long id) {
+        clothingItemService.deleteClothingItem(id);
+        return ResponseEntity.noContent().build();
+    }
 }
