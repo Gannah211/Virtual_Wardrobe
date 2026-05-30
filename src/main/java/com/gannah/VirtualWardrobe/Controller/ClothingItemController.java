@@ -2,6 +2,7 @@ package com.gannah.VirtualWardrobe.Controller;
 
 import com.gannah.VirtualWardrobe.DTO.Request.ClothingItemRequest;
 import com.gannah.VirtualWardrobe.DTO.Response.ClothingItemResponse;
+import com.gannah.VirtualWardrobe.Model.Season;
 import com.gannah.VirtualWardrobe.Service.ClothingItemService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +35,15 @@ public class ClothingItemController {
     @GetMapping("/category/{categoryID}")
     public ResponseEntity<List<ClothingItemResponse>> getClothingItemsByCategory(@PathVariable Long categoryID) {
         return ResponseEntity.ok(clothingItemService.getClothingItemsByCategory(categoryID));
+    }
+
+    @GetMapping("/season/{season}")
+    public ResponseEntity<List<ClothingItemResponse>> getClothingItemsBySeason(@PathVariable String season) {
+        return ResponseEntity.ok(clothingItemService.getItemsBySeason(Season.valueOf(season)));
+    }
+    @GetMapping("/comfort/{comfortable}")
+    public ResponseEntity<List<ClothingItemResponse>> getClothingItemsByComfort(@PathVariable boolean comfortable) {
+        return ResponseEntity.ok(clothingItemService.getItemsByComfort(comfortable));
     }
 
     @DeleteMapping("/{id}")

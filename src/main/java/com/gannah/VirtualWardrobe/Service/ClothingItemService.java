@@ -2,10 +2,7 @@ package com.gannah.VirtualWardrobe.Service;
 
 import com.gannah.VirtualWardrobe.DTO.Request.ClothingItemRequest;
 import com.gannah.VirtualWardrobe.DTO.Response.ClothingItemResponse;
-import com.gannah.VirtualWardrobe.Model.Category;
-import com.gannah.VirtualWardrobe.Model.ClothingItem;
-import com.gannah.VirtualWardrobe.Model.Occasion;
-import com.gannah.VirtualWardrobe.Model.User;
+import com.gannah.VirtualWardrobe.Model.*;
 import com.gannah.VirtualWardrobe.Repository.CategoryRepository;
 import com.gannah.VirtualWardrobe.Repository.ClothingItemRepository;
 import com.gannah.VirtualWardrobe.Repository.UserRepository;
@@ -55,6 +52,17 @@ public class ClothingItemService {
         }
         return clothingItemRepository.findByUserAndOccasionListContaining(user,occasionEnum).stream().map(this::mapToResponse).collect(Collectors.toList());
     }
+    public List<ClothingItemResponse> getItemsBySeason(Season season) {
+        User user = getAuthenticatedUser();
+        return clothingItemRepository.findByUserAndSeason(user,season).stream().map(this::mapToResponse).collect(Collectors.toList());
+    }
+    public List<ClothingItemResponse> getItemsByComfort(boolean comfort) {
+        User user = getAuthenticatedUser();
+        if (comfort) {
+            return clothingItemRepository.findByIsComfortableTrue(comfort).stream().map(this::mapToResponse).collect(Collectors.toList());
+        }
+        return clothingItemRepository.findByIsComfortableFalse(comfort).stream().map(this::mapToResponse).collect(Collectors.toList());
+    }
 
     public ClothingItemResponse addClothingItem(ClothingItemRequest request) {
         User user = getAuthenticatedUser();
@@ -76,6 +84,7 @@ public class ClothingItemService {
         ClothingItem clothingItem = clothingItemRepository.findById(id).orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Clothing Item not found"));
         clothingItemRepository.delete(clothingItem);
     }
+
 
     private ClothingItemResponse mapToResponse(ClothingItem clothingItem) {
         return ClothingItemResponse.builder()
