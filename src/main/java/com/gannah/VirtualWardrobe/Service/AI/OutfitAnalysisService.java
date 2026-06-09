@@ -3,10 +3,15 @@ package com.gannah.VirtualWardrobe.Service.AI;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gannah.VirtualWardrobe.DTO.Request.OutfitAnalysisRequest;
+import com.gannah.VirtualWardrobe.DTO.Response.OutfitAnalysisHistoryResponse;
 import com.gannah.VirtualWardrobe.DTO.Response.OutfitAnalysisResponse;
 import com.gannah.VirtualWardrobe.Model.ClothingItem;
 import com.gannah.VirtualWardrobe.Model.Occasion;
+import com.gannah.VirtualWardrobe.Model.OutfitAnalysisHistory;
+import com.gannah.VirtualWardrobe.Model.User;
 import com.gannah.VirtualWardrobe.Repository.ClothingItemRepository;
+import com.gannah.VirtualWardrobe.Repository.OutfitAnalysisHistoryRepository;
+import com.gannah.VirtualWardrobe.Repository.UserRepository;
 import com.google.genai.Client;
 import com.google.genai.types.Content;
 import com.google.genai.types.GenerateContentConfig;
@@ -19,9 +24,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -29,7 +36,10 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class OutfitAnalysisService {
     private final ClothingItemRepository clothingItemRepository;
+    private final OutfitAnalysisHistoryRepository outfitAnalysisHistoryRepository;
     private final GeminiHelpers geminiHelpers;
+    private final ObjectMapper objectMapper;
+    private final UserRepository userRepository;
 
     @Value("${gemini.api.key}")
     private String geminiApiKey;
@@ -70,13 +80,23 @@ public class OutfitAnalysisService {
         if(request.getClothingItemIds() == null || request.getClothingItemIds().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing Clothing Item IDs");
         }
+        User user = getAuthenticatedUser();
 
         List<ClothingItem> items = clothingItemRepository.findAllById(request.getClothingItemIds());
 
         if(items.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Clothing items not found");
         }
-        return callGeminiForAnalysis(request.getUserImageBase64(), items);
+        String cacheKey = buildCacheKey(request.getUserImageBase64(),items,user.getId());
+
+        Optional<OutfitAnalysisHistory> cached = outfitAnalysisHistoryRepository.findByUserIdAndCacheKey(user.getId(), cacheKey);
+        if(cached.isPresent()) {
+            log.info("DB cache hit for user={}", user.getEmail());
+            return deserializeResponse(cached.get().getResponseJson());
+        }
+        OutfitAnalysisResponse response = callGeminiForAnalysis(request.getUserImageBase64(), items);
+        saveToDb(user,items,cacheKey, response);
+        return response;
     }
 
     private OutfitAnalysisResponse callGeminiForAnalysis(String userImageBase64, List<ClothingItem> items) {
@@ -249,4 +269,97 @@ public class OutfitAnalysisService {
         try { return dataUrl.split(";")[0].replace("data:", ""); }
         catch (Exception e) { return "image/jpeg"; }
     }
+
+    /* ── DB operations ───────────────────────────────────── */
+    private User getAuthenticatedUser() {
+        String email = "gannah@gmail.com";
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+    }
+
+    private void saveToDb(User user,List<ClothingItem> clothingItems,String cacheKey, OutfitAnalysisResponse response){
+        try{
+            String responseJson = objectMapper.writeValueAsString(response);
+
+            OutfitAnalysisHistory history =OutfitAnalysisHistory.builder()
+                    .user(user)
+                    .cacheKey(cacheKey)
+                    .clothingItems(clothingItems)
+                    .responseJson(responseJson)
+                    .build();
+
+            outfitAnalysisHistoryRepository.save(history);
+            log.info("Saved analysis to DB: userId={}, itemCount={}", user.getId(), clothingItems.size());
+        }catch (Exception e){
+            log.error("Failed to save analysis to DB: {}", e.getMessage());
+        }
+    }
+
+    private OutfitAnalysisResponse deserializeResponse(String json) {
+        try{
+            return objectMapper.readValue(json,OutfitAnalysisResponse.class);
+        }catch (Exception e){
+            log.error("Failed to deserialize cached  response: {}", e.getMessage());
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to load cached analysis");
+        }
+    }
+
+    public List<OutfitAnalysisHistoryResponse> getHistory(){
+        User user = getAuthenticatedUser();
+        return outfitAnalysisHistoryRepository.findByUserIdOrderByCreatedAtDesc(user.getId())
+                .stream()
+                .map(a -> OutfitAnalysisHistoryResponse.builder()
+                        .id(a.getId())
+                        .items(a.getClothingItems().stream()
+                                .map(item -> OutfitAnalysisHistoryResponse.ItemSummary.builder()
+                                        .id(item.getId())
+                                        .imgUrl(item.getImgUrl())
+                                        .color(item.getColor())
+                                        .categoryName(item.getCategory() != null? item.getCategory().getName() : "item")
+                                        .build())
+                                .collect(Collectors.toList()))
+                        .result(deserializeResponse(a.getResponseJson()))
+                        .createdAt(a.getCreatedAt())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    public void deleteById(Long analysisId){
+        User user = getAuthenticatedUser();
+        OutfitAnalysisHistory analysisHistory = outfitAnalysisHistoryRepository.findById(analysisId).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"Analysis not found"));
+        if(!analysisHistory.getUser().getId().equals(user.getId())){
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cannot delete another user's analysis");
+        }
+        outfitAnalysisHistoryRepository.delete(analysisHistory);
+    }
+
+    private String buildCacheKey(String userImagebase64,List<ClothingItem> items, Long userId){
+        try{
+            String imageSignature = userImagebase64.length() >200
+                    ? userImagebase64.substring(0,200)
+                    : userImagebase64;
+
+            String sortedIds = items.stream()
+                    .map(ClothingItem::getId)
+                    .sorted()
+                    .map(String::valueOf)
+                    .collect(Collectors.joining(","));
+
+            String raw = userId + "|" + imageSignature + "|" + sortedIds;
+
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(raw.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            return Base64.getEncoder().encodeToString(hash);
+        }catch (Exception e){
+            log.warn("Cache key generation failed, using fallback");
+            return userId +"|"+ userImagebase64.length() + "|"+
+                    items.stream()
+                            .map(ClothingItem::getId)
+                            .sorted()
+                            .map(String::valueOf)
+                            .collect(Collectors.joining(","));
+        }
+    }
 }
+
+
