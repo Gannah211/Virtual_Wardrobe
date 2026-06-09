@@ -32,4 +32,8 @@ public class OutfitController {
     public ResponseEntity<List<OutfitResponse>> getUserAllOutfits() {
         return ResponseEntity.ok(outfitService.getUserOutfits());
     }
+    @PostMapping("/update-Outfit/{outfitId}")
+    public ResponseEntity<OutfitResponse> updateOutfit(@PathVariable Long outfitId,@RequestBody OutfitRequest request) {
+        return ResponseEntity.ok(outfitService.updateOutfit(outfitId,request));
+    }
 }

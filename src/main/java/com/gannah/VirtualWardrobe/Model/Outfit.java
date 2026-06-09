@@ -34,7 +34,7 @@ public class Outfit {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @OneToMany(mappedBy = "outfit",fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "outfit",fetch = FetchType.EAGER, orphanRemoval = true,cascade = CascadeType.ALL)
     @JsonIgnore
     @ToString.Exclude
     private List<OutfitItem> outfitItems= new ArrayList<>();

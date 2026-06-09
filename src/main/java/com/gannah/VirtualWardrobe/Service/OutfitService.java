@@ -58,6 +58,30 @@ public class OutfitService {
     }
 
     @Transactional
+    public OutfitResponse updateOutfit(Long outfitId,OutfitRequest Request) {
+        Outfit outfit = outfitRepository.findById(outfitId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Outfit not found with id: " + outfitId));
+        outfit.setName(Request.getName());
+        outfit.setDescription(Request.getDescription());
+        outfit.getOutfitItems().clear();
+        System.out.println("outfit items before adding the new :" +outfit.getOutfitItems().size());
+        Outfit savedOutfit = outfitRepository.save(outfit);
+
+        List<OutfitItem> newOutfitItems = Request.getClothingItemsIds().stream()
+                .map(itemId -> {
+                    ClothingItem clothingItem = clothingItemRepository.findById(itemId)
+                            .orElseThrow(() -> new ResponseStatusException(
+                                    HttpStatus.NOT_FOUND, "Clothing item not found with id: " + itemId
+                            ));
+                    return OutfitItem.builder()
+                            .outfit(outfit)
+                            .clothingItem(clothingItem)
+                            .build();
+                }).toList();
+        savedOutfit.getOutfitItems().addAll(newOutfitItems);
+        return mapToResponse(outfitRepository.save(savedOutfit));
+    }
+
+    @Transactional
     public void deleteUserOutfit(Long outfitId) {
         Outfit outfit = outfitRepository.findById(outfitId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Outfit not found: " + outfitId));
         outfitItemRepository.deleteByOutfitId(outfitId);
