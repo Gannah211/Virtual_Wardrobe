@@ -3,6 +3,7 @@ package com.gannah.VirtualWardrobe.Controller;
 import com.gannah.VirtualWardrobe.DTO.Request.OutfitRequest;
 import com.gannah.VirtualWardrobe.DTO.Response.OutfitResponse;
 import com.gannah.VirtualWardrobe.Service.OutfitService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -32,8 +33,8 @@ public class OutfitController {
     public ResponseEntity<List<OutfitResponse>> getUserAllOutfits() {
         return ResponseEntity.ok(outfitService.getUserOutfits());
     }
-    @PostMapping("/update-Outfit/{outfitId}")
-    public ResponseEntity<OutfitResponse> updateOutfit(@PathVariable Long outfitId,@RequestBody OutfitRequest request) {
+    @PutMapping("/update-Outfit/{outfitId}")
+    public ResponseEntity<OutfitResponse> updateOutfit(@PathVariable Long outfitId,@Valid @RequestBody OutfitRequest request) {
         return ResponseEntity.ok(outfitService.updateOutfit(outfitId,request));
     }
 }

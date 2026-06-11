@@ -20,4 +20,5 @@ public class ClothingItemResponse {
     private List<String> ocassionList;
     private String season;
     private String categoryName;
+    private Long categoryId;
 }

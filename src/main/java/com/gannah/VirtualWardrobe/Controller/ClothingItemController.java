@@ -45,6 +45,10 @@ public class ClothingItemController {
     public ResponseEntity<List<ClothingItemResponse>> getClothingItemsByComfort(@PathVariable boolean comfortable) {
         return ResponseEntity.ok(clothingItemService.getItemsByComfort(comfortable));
     }
+    @PutMapping("/edit-Item/{itemId}")
+    public ResponseEntity<ClothingItemResponse> updateItem(@PathVariable Long itemId, @Valid @RequestBody ClothingItemRequest request) {
+        return ResponseEntity.ok(clothingItemService.updateClothingItem(itemId, request));
+    }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteClothingItem(@PathVariable Long id) {

@@ -79,6 +79,21 @@ public class ClothingItemService {
                 .build();
         return mapToResponse(clothingItemRepository.save(clothingItem));
     }
+    public ClothingItemResponse updateClothingItem(Long itemId,ClothingItemRequest request) {
+        User user = getAuthenticatedUser();
+        ClothingItem clothingItem = clothingItemRepository.findById(itemId).orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Item not found"));
+        Category category = categoryRepository.findById(request.getCategoryId()).orElseThrow( () -> new RuntimeException("Category not found"));
+        clothingItem.setColor(request.getColor());
+        clothingItem.setImgUrl(request.getImgUrl());
+        clothingItem.setNote(request.getNote());
+        clothingItem.setSeason(request.getSeason());
+        clothingItem.setCategory(category);
+        clothingItem.setComfortable(request.isComfortable());
+        clothingItem.setOccasionList(request.getOcassionList());
+        clothingItemRepository.save(clothingItem);
+        return mapToResponse(clothingItem);
+
+    }
 
     public void deleteClothingItem(Long id) {
         ClothingItem clothingItem = clothingItemRepository.findById(id).orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Clothing Item not found"));
@@ -95,6 +110,7 @@ public class ClothingItemService {
                 .isComfortable(clothingItem.isComfortable())
                 .categoryName(clothingItem.getCategory().getName())
                 .season(clothingItem.getSeason()!= null ? clothingItem.getSeason().toString() : null)
+                .categoryId(clothingItem.getCategory() != null ? clothingItem.getCategory().getId() : null)
                 .ocassionList(clothingItem.getOccasionList().stream().map(Occasion::toString).collect(Collectors.toList()))
                 .build();
     }
