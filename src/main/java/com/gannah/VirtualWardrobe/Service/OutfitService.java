@@ -33,9 +33,17 @@ public class OutfitService {
     }
     public OutfitResponse createOutfit(OutfitRequest Request) {
         User user =getAuthenticatedUser();
+
+        String requestSignature = Request.getClothingItemsIds().stream().sorted().map(String::valueOf).collect(Collectors.joining(","));
+
+        boolean OutfitExists = outfitRepository.existsByoutfitSignature(requestSignature);
+        if(OutfitExists) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Outfit already exists");
+        }
         Outfit outfit = Outfit.builder()
                 .name(Request.getName())
                 .description(Request.getDescription())
+                .outfitSignature(requestSignature)
                 .user(user)
                 .outfitItems(new ArrayList<>())
                 .build();

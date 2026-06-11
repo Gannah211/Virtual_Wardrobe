@@ -26,6 +26,9 @@ public class Outfit {
     @Column(nullable = false)
     private String description;
 
+    @Column(unique = true)
+    private String outfitSignature;
+
     @CreationTimestamp
     @Column(nullable = false)
     private LocalDateTime createdAt;
@@ -38,4 +41,5 @@ public class Outfit {
     @JsonIgnore
     @ToString.Exclude
     private List<OutfitItem> outfitItems= new ArrayList<>();
+
 }

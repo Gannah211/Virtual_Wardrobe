@@ -17,4 +17,7 @@ public interface OutfitRepository extends JpaRepository<Outfit, Long> {
     @Modifying
     @Query(nativeQuery = true, value = "DELETE FROM outfit WHERE id = :outfitId")
     void deleteOutfit(@Param("outfitId") Long outfitId);
+
+    boolean existsByoutfitSignature(String signature);
+
 }
