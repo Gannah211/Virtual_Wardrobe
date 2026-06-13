@@ -19,6 +19,7 @@ public interface ClothingItemRepository extends JpaRepository<ClothingItem, Long
     List<ClothingItem> findByUser(User user);
     List<ClothingItem> findByUserAndSeason(User user, Season season);
 
+    boolean existsByUserAndImgUrl(User user, String imgUrl);
     @Modifying
     @Query(nativeQuery = true, value = "DELETE FROM clothing_item WHERE id = :itemId")
     void deleteItem(@Param("itemId") Long itemId);
