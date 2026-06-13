@@ -4,11 +4,13 @@ import com.gannah.VirtualWardrobe.DTO.Request.ClothingItemRequest;
 import com.gannah.VirtualWardrobe.DTO.Response.ClothingItemResponse;
 import com.gannah.VirtualWardrobe.Model.*;
 import com.gannah.VirtualWardrobe.Repository.CategoryRepository;
+import com.gannah.VirtualWardrobe.Repository.ClothingItemOccasionsRepository;
 import com.gannah.VirtualWardrobe.Repository.ClothingItemRepository;
 import com.gannah.VirtualWardrobe.Repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -19,10 +21,11 @@ import java.util.stream.Collectors;
 public class ClothingItemService {
     private final UserRepository userRepository;
     private final ClothingItemRepository clothingItemRepository;
+    private final ClothingItemOccasionsRepository clothingItemOccasionsRepository;
     private final CategoryRepository categoryRepository;
 
     public List<ClothingItemResponse> getUserAllClothingItems() {
-        User user = getAuthenticatedUser();  // extract to a private helper
+        User user = getAuthenticatedUser();
         return clothingItemRepository.findByUser(user)
                 .stream()
                 .map(this::mapToResponse)
@@ -95,9 +98,11 @@ public class ClothingItemService {
 
     }
 
+    @Transactional
     public void deleteClothingItem(Long id) {
         ClothingItem clothingItem = clothingItemRepository.findById(id).orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Clothing Item not found"));
-        clothingItemRepository.delete(clothingItem);
+        clothingItemOccasionsRepository.deleteItemOccasions(clothingItem.getId());
+        clothingItemRepository.deleteItem(clothingItem.getId());
     }
 
 
