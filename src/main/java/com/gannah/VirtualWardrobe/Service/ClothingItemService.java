@@ -72,7 +72,7 @@ public class ClothingItemService {
         Category category = categoryRepository.findById(request.getCategoryId()).orElseThrow( () -> new RuntimeException("Category not found"));
         boolean itemExist = clothingItemRepository.existsByUserAndImgUrl(user,request.getImgUrl());
         if(itemExist){
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Item already exists,try something else dear");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Item already exists,try something else dear");
         }
         ClothingItem clothingItem = ClothingItem.builder()
                 .color(request.getColor())

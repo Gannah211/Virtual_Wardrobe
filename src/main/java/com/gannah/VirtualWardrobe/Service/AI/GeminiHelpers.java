@@ -36,21 +36,29 @@ public class GeminiHelpers {
 
     public String buildPromptText(OutfitAdviceRequest request){
         StringBuilder sb = new StringBuilder();
-
-        if(hasImage(request.getTopImgUrl())){
-            sb.append(String.format("The first image is a %s in %s. ", request.getTopCategory(), request.getTopColor()));
-        }else{
-            sb.append(String.format("Top: a %s in %s(no image).", request.getTopCategory(), request.getTopColor()));
+        int count = 1;
+        for (String item : request.getItemsImgUrls()){
+            if(hasImage(item)){
+                sb.append(String.format("Image %d is a %s in %s .",count, request.getItemsCategory().get(count-1), request.getItemsColors().get(count-1)));
+            }else{
+                sb.append(String.format("item %d is a %s in %s .",count, request.getItemsCategory().get(count-1), request.getItemsColors().get(count-1)));
+            }
+            count++;
         }
-
-        if(hasImage(request.getBottomImgUrl())){
-            sb.append(String.format("The second image is a %s in %s.",request.getBottomCategory(), request.getBottomColor()));
-        }else{
-            sb.append(String.format(
-                    "Bottom: a %s in %s (no image). ",
-                    request.getBottomCategory(), request.getBottomColor()
-            ));
-        }
+//            if(hasImage(request.getTopImgUrl())){
+//            sb.append(String.format("The first image is a %s in %s. ", request.getTopCategory(), request.getTopColor()));
+//        }else{
+//            sb.append(String.format("Top: a %s in %s(no image).", request.getTopCategory(), request.getTopColor()));
+//        }
+//
+//        if(hasImage(request.getBottomImgUrl())){
+//            sb.append(String.format("The second image is a %s in %s.",request.getBottomCategory(), request.getBottomColor()));
+//        }else{
+//            sb.append(String.format(
+//                    "Bottom: a %s in %s (no image). ",
+//                    request.getBottomCategory(), request.getBottomColor()
+//            ));
+//        }
         sb.append("Question: ").append(request.getPrompt());
         return sb.toString();
     }

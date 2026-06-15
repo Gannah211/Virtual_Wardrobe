@@ -53,15 +53,24 @@ public class GeminiOutfitAdviceService implements OutfitAdviceProvider {
         System.out.println("Gemini URL = " + url);
         List<Map<String, Object>> parts = new ArrayList<>();
 
-        String topImg = geminiHelpers.resizeImageForAI(request.getTopImgUrl());
-        String bottomImg = geminiHelpers.resizeImageForAI(request.getBottomImgUrl());
+        List<String> items = new ArrayList<>();
 
-        if(geminiHelpers.hasImage(topImg)){
-            parts.add(geminiHelpers.buildImagePart(topImg));
+        for (String item : request.getItemsImgUrls()){
+            String newItem =geminiHelpers.resizeImageForAI(item);
+            items.add(newItem);
         }
-        if(geminiHelpers.hasImage(bottomImg)){
-            parts.add(geminiHelpers.buildImagePart(bottomImg));
+        for (String item : items){
+            if(geminiHelpers.hasImage(item)){
+                parts.add(geminiHelpers.buildImagePart(item));
+            }
         }
+
+//        if(geminiHelpers.hasImage(topImg)){
+//            parts.add(geminiHelpers.buildImagePart(topImg));
+//        }
+//        if(geminiHelpers.hasImage(bottomImg)){
+//            parts.add(geminiHelpers.buildImagePart(bottomImg));
+//        }
         parts.add(Map.of("text", geminiHelpers.buildPromptText(request)));
 
         Map<String, Object> body = new LinkedHashMap<>();
