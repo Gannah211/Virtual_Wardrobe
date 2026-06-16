@@ -64,14 +64,7 @@ public class GeminiOutfitAdviceService implements OutfitAdviceProvider {
                 parts.add(geminiHelpers.buildImagePart(item));
             }
         }
-
-//        if(geminiHelpers.hasImage(topImg)){
-//            parts.add(geminiHelpers.buildImagePart(topImg));
-//        }
-//        if(geminiHelpers.hasImage(bottomImg)){
-//            parts.add(geminiHelpers.buildImagePart(bottomImg));
-//        }
-        parts.add(Map.of("text", geminiHelpers.buildPromptText(request)));
+       parts.add(Map.of("text", geminiHelpers.buildPromptText(request)));
 
         Map<String, Object> body = new LinkedHashMap<>();
 
