@@ -9,6 +9,7 @@ import com.gannah.VirtualWardrobe.Repository.ClothingItemRepository;
 import com.gannah.VirtualWardrobe.Repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -33,9 +34,10 @@ public class ClothingItemService {
     }
 
     private User getAuthenticatedUser() {
-        String email = "gannah@gmail.com";
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+       String email = SecurityContextHolder.getContext().getAuthentication().getName();
+
+       return userRepository.findByEmail(email)
+               .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
     }
 
     public List<ClothingItemResponse> getClothingItemsByCategory(Long categoryId) {
