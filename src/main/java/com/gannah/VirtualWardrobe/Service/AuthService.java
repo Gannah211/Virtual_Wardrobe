@@ -2,6 +2,8 @@ package com.gannah.VirtualWardrobe.Service;
 
 import com.gannah.VirtualWardrobe.DTO.Request.*;
 import com.gannah.VirtualWardrobe.DTO.Response.AuthResponse;
+import com.gannah.VirtualWardrobe.Exception.BadRequestException;
+import com.gannah.VirtualWardrobe.Exception.ResourceNotFoundException;
 import com.gannah.VirtualWardrobe.Model.PasswordResetOtp;
 import com.gannah.VirtualWardrobe.Repository.PasswordResetOtpRepository;
 import com.gannah.VirtualWardrobe.Repository.UserRepository;
@@ -29,7 +31,7 @@ public class AuthService {
 
     public AuthResponse  register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already exists");
+            throw new BadRequestException("Email already exists");
         }
         User user = User.builder()
                 .username(request.getUsername())
@@ -58,7 +60,7 @@ public class AuthService {
                 ? 30L * 24 * 60 * 60 * 1000
                 : 24L * 60 * 60 * 1000;
 
-        User user = userRepository.findByEmail(request.getEmail()).orElseThrow(()-> new RuntimeException("User not found"));
+        User user = userRepository.findByEmail(request.getEmail()).orElseThrow(()-> new ResourceNotFoundException("User not found"));
         String token = jwtUtil.generateToken(user.getEmail(), expiration);
 
         return AuthResponse.builder()
@@ -70,7 +72,7 @@ public class AuthService {
 
     @Transactional
     public void forgotPassword (ForgotPasswordRequest request) {
-        User user =  userRepository.findByEmail(request.getEmail()).orElseThrow(()-> new RuntimeException("User not found"));
+        User user =  userRepository.findByEmail(request.getEmail()).orElseThrow(()-> new ResourceNotFoundException("User not found"));
 
         otpRepository.deleteByEmail(user.getEmail());
 
@@ -87,14 +89,14 @@ public class AuthService {
     }
 
     public void verifyOtp(VerifyOtpRequest request) {
-        PasswordResetOtp resetOtp = otpRepository.findByEmail(request.getEmail()).orElseThrow(()-> new RuntimeException("Otp not found"));
+        PasswordResetOtp resetOtp = otpRepository.findByEmail(request.getEmail()).orElseThrow(()-> new ResourceNotFoundException("Otp not found"));
 
         if(resetOtp.getExpiresAt().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("OTP expired");
+            throw new BadRequestException("OTP expired");
         }
 
         if(!resetOtp.getOtp().equals(request.getOtp())) {
-            throw new RuntimeException("Invalid OTP");
+            throw new BadRequestException("Invalid OTP");
         }
 
         resetOtp.setVerified(true);
@@ -103,13 +105,13 @@ public class AuthService {
 
     @Transactional
     public void resetPassword(ResetPasswordRequest request) {
-        PasswordResetOtp resetOtp = otpRepository.findByEmail(request.getEmail()).orElseThrow(()-> new RuntimeException("Otp not found"));
+        PasswordResetOtp resetOtp = otpRepository.findByEmail(request.getEmail()).orElseThrow(()-> new ResourceNotFoundException("Otp not found"));
 
         if(!resetOtp.isVerified()){
-            throw new RuntimeException("OTP not verified");
+            throw new BadRequestException("OTP not verified");
         }
 
-        User user = userRepository.findByEmail(request.getEmail()).orElseThrow(()-> new RuntimeException("User not found"));
+        User user = userRepository.findByEmail(request.getEmail()).orElseThrow(()-> new ResourceNotFoundException("User not found"));
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);

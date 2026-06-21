@@ -2,6 +2,7 @@ package com.gannah.VirtualWardrobe.Service;
 
 import com.gannah.VirtualWardrobe.DTO.Request.ClothingItemRequest;
 import com.gannah.VirtualWardrobe.DTO.Response.ClothingItemResponse;
+import com.gannah.VirtualWardrobe.Exception.ResourceNotFoundException;
 import com.gannah.VirtualWardrobe.Model.*;
 import com.gannah.VirtualWardrobe.Repository.CategoryRepository;
 import com.gannah.VirtualWardrobe.Repository.ClothingItemOccasionsRepository;
@@ -71,7 +72,7 @@ public class ClothingItemService {
 
     public ClothingItemResponse addClothingItem(ClothingItemRequest request) {
         User user = getAuthenticatedUser();
-        Category category = categoryRepository.findById(request.getCategoryId()).orElseThrow( () -> new RuntimeException("Category not found"));
+        Category category = categoryRepository.findById(request.getCategoryId()).orElseThrow( () -> new ResourceNotFoundException("Category not found"));
         boolean itemExist = clothingItemRepository.existsByUserAndImgUrl(user,request.getImgUrl());
         if(itemExist){
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Item already exists,try something else dear");
@@ -91,7 +92,7 @@ public class ClothingItemService {
     public ClothingItemResponse updateClothingItem(Long itemId,ClothingItemRequest request) {
         User user = getAuthenticatedUser();
         ClothingItem clothingItem = clothingItemRepository.findById(itemId).orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Item not found"));
-        Category category = categoryRepository.findById(request.getCategoryId()).orElseThrow( () -> new RuntimeException("Category not found"));
+        Category category = categoryRepository.findById(request.getCategoryId()).orElseThrow( () -> new ResourceNotFoundException("Category not found"));
         clothingItem.setColor(request.getColor());
         clothingItem.setImgUrl(request.getImgUrl());
         clothingItem.setNote(request.getNote());
