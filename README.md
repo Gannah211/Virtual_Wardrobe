@@ -18,7 +18,6 @@ Instead of picking outfits at random, Virtual Wardrobe helps you build, store, a
 - [Frontend](#frontend)
 - [What I Learned](#what-i-learned)
 - [Roadmap](#roadmap)
-- [License](#license)
 - [Author](#author)
 
 ---
