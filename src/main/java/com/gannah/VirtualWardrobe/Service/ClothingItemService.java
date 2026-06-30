@@ -65,9 +65,9 @@ public class ClothingItemService {
     public List<ClothingItemResponse> getItemsByComfort(boolean comfort) {
         User user = getAuthenticatedUser();
         if (comfort) {
-            return clothingItemRepository.findByIsComfortableTrue(comfort).stream().map(this::mapToResponse).collect(Collectors.toList());
+            return clothingItemRepository.findByUserAndIsComfortableTrue(user,comfort).stream().map(this::mapToResponse).collect(Collectors.toList());
         }
-        return clothingItemRepository.findByIsComfortableFalse(comfort).stream().map(this::mapToResponse).collect(Collectors.toList());
+        return clothingItemRepository.findByUserAndIsComfortableFalse(user,comfort).stream().map(this::mapToResponse).collect(Collectors.toList());
     }
 
     public ClothingItemResponse addClothingItem(ClothingItemRequest request) {

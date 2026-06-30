@@ -43,7 +43,7 @@ public class GlobalExceptionHandler {
                 .timestamp(LocalDateTime.now())
                 .status(status.value())
                 .error(status.getReasonPhrase())
-                .message(ex.getMessage())
+                .message(ex.getReason())
                 .path(request.getRequestURI())
                 .build();
         return new ResponseEntity<>(error, status);
